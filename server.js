@@ -37,6 +37,11 @@ http
     const path = upath.pathname;
     if (path === "/auth") {
       const query = Object.assign({}, querystring.parse(upath.query));
+      if (!!query.jwt) {
+        const token = jwt.decode(query.jwt);
+        res.end(JSON.stringify(token, undefined, 2));
+        return;
+      }
       if (!!query.user && !!query.key) {
         try {
           const pkeyPem = keyEncoder.encodePrivate(
