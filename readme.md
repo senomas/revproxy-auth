@@ -14,7 +14,7 @@ docker run senomas/revproxy-auth:1.0.1
 ## RUNNING
 
 ```
-docker run -e PUBLIC_KEY=<PUBLIC_KEY> -e TARGET=http://xxxxxxxx/ senomas/revproxy-auth:1.0.1
+docker run -e PUBLIC_KEY=<PUBLIC_KEY> -e validIAT=0 -e TARGET=http://xxxxxxxx/ senomas/revproxy-auth:1.0.1
 ```
 
 ## GENERATE TOKEN

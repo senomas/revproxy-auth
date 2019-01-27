@@ -6,6 +6,7 @@ const auth = require("basic-auth");
 const jwt = require("jsonwebtoken");
 const KeyEncoder = require("key-encoder");
 const crypto = require("crypto");
+const moment = require("moment");
 
 const proxy = httpProxy.createProxyServer();
 
@@ -18,13 +19,25 @@ if (!process.env.PUBLIC_KEY) {
   process.exit(1);
 }
 
+if (!process.env.validIAT) {
+  console.log("validIAT    ", Math.floor(new Date() / 1000));
+}
+
+const validIAT = parseInt(process.env.validIAT);
 const key = process.env.PUBLIC_KEY;
 const keyEncoder = new KeyEncoder("secp256k1");
-const pem = keyEncoder.encodePublic(Buffer.from(querystring.unescape(key), "base64"), "raw", "pem");
+const pem = keyEncoder.encodePublic(
+  Buffer.from(querystring.unescape(key), "base64"),
+  "raw",
+  "pem"
+);
 
 function check(name, pass) {
   try {
     const jd = jwt.verify(pass, pem);
+    if (jd.iat < validIAT) {
+      return false;
+    }
     return name === jd.sub;
   } catch (err) {
     return false;
@@ -39,7 +52,18 @@ http
       const query = Object.assign({}, querystring.parse(upath.query));
       if (!!query.jwt) {
         const token = jwt.decode(query.jwt);
-        res.end(JSON.stringify(token, undefined, 2));
+        res.writeHead(200, { "Content-Type": "text/json" });
+        res.end(
+          JSON.stringify({
+            token,
+            issuedAt: moment(token.iat * 1000).format(
+              "DD/MM/YYYY HH:mm:ss"
+            ),
+            expiresIn: moment(token.exp * 1000).format(
+              "DD/MM/YYYY HH:mm:ss"
+            )
+          })
+        );
         return;
       }
       if (!!query.user && !!query.key) {
@@ -54,7 +78,8 @@ http
             expiresIn: query.expiry ? parseInt(query.expiry, 10) * 3600 : 86400
           });
           jwt.verify(token, pem);
-          res.end(token);
+          res.writeHead(200, { "Content-Type": "text/json" });
+          res.end(JSON.stringify({ user: query.user, token }, undefined, 2));
         } catch (err) {
           res.statusCode = 500;
           res.end(err.message);
@@ -77,3 +102,18 @@ http
     });
   })
   .listen(8000);
+
+if (!!process.env.DEV) {
+  http
+    .createServer(function(req, res) {
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.write(
+        "request successfully proxied to: " +
+          req.url +
+          "\n" +
+          JSON.stringify(req.headers, true, 2)
+      );
+      res.end();
+    })
+    .listen(9000);
+}
