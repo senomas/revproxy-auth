@@ -46,7 +46,7 @@ http
           );
           const token = jwt.sign({ sub: query.user }, pkeyPem, {
             algorithm: "ES256",
-            expiresIn: 86400
+            expiresIn: query.expiry ? parseInt(query.expiry, 10) * 3600 : 86400
           });
           jwt.verify(token, pem);
           res.end(token);
