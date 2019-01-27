@@ -7,6 +7,7 @@ Vue.use(Buefy)
 import App from './App.vue'
 
 Vue.config.productionTip = false
+Vue.config.assetsSubDirectory = "/~auth"
 
 new Vue({
   render: h => h(App),

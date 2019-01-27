@@ -1,8 +1,8 @@
 ## BUILD
 
 ```
-docker build . -t senomas/revproxy-auth:1.0.3
-docker push senomas/revproxy-auth:1.0.3
+docker build . -t senomas/revproxy-auth:1.0.4
+docker push senomas/revproxy-auth:1.0.4
 ```
 
 ## CREATE KEY PAIR
