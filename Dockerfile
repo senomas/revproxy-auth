@@ -1,4 +1,4 @@
-FROM 11.8.0-alpine
+FROM node:11.8.0-alpine
 LABEL maintainer="Senomas <agus@senomas.com>"
 
 WORKDIR /home/node/app
