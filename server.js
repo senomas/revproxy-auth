@@ -23,6 +23,7 @@ if (!process.env.validIAT) {
   console.log("validIAT    ", Math.floor(new Date() / 1000));
 }
 
+const service = process.env.SERVICE || "senomas";
 const validIAT = parseInt(process.env.validIAT);
 const key = process.env.PUBLIC_KEY;
 const keyEncoder = new KeyEncoder("secp256k1");
@@ -34,8 +35,14 @@ const pem = keyEncoder.encodePublic(
 
 function check(name, pass) {
   try {
+    if (!!process.env.DEV) {
+      console.log('TOKEN', JSON.stringify(jwt.decode(pass, pem), undefined, 2));
+    }
     const jd = jwt.verify(pass, pem);
     if (jd.iat < validIAT) {
+      return false;
+    }
+    if (jd.kid !== service) {
       return false;
     }
     return name === jd.sub;
@@ -56,12 +63,8 @@ http
         res.end(
           JSON.stringify({
             token,
-            issuedAt: moment(token.iat * 1000).format(
-              "DD/MM/YYYY HH:mm:ss"
-            ),
-            expiresIn: moment(token.exp * 1000).format(
-              "DD/MM/YYYY HH:mm:ss"
-            )
+            issuedAt: moment(token.iat * 1000).format("DD/MM/YYYY HH:mm:ss"),
+            expiresIn: moment(token.exp * 1000).format("DD/MM/YYYY HH:mm:ss")
           })
         );
         return;
@@ -73,7 +76,7 @@ http
             "raw",
             "pem"
           );
-          const token = jwt.sign({ sub: query.user }, pkeyPem, {
+          const token = jwt.sign({ sub: query.user, kid: service }, pkeyPem, {
             algorithm: "ES256",
             expiresIn: query.expiry ? parseInt(query.expiry, 10) * 3600 : 86400
           });
