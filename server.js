@@ -33,8 +33,8 @@ const pem = keyEncoder.encodePublic(
 
 const app = express();
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(authPath, bodyParser.urlencoded({ extended: true }));
+app.use(authPath, bodyParser.json());
 
 const router = express.Router();
 
